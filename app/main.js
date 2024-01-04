@@ -22,62 +22,99 @@ const loadInitialTemplate = () => {
     body.innerHTML = template
 }
 
-const getCars = async () => {
-    const response = await fetch('/cars', {
-        headers: {
-            Authorization: localStorage.getItem('jwt'),
-        }
-    })
-    const cars = await response.json()
-    console.log(cars)
-    const template = car => `
-        <li class="list-group-item">
-            ${car.brand} ${car.model} <button data-id="${car._id}" type="button" class="btn btn-primary">Eliminar</button>
-        </li>
-    `
-    const carList = document.getElementById('car-list')
-    carList.innerHTML = cars.map(car => template(car)).join('')
-    cars.forEach(car => {
-        const carNode = document.querySelector(`[data-id="${car._id}"]`)
-        carNode.onclick = async e => {
-            await fetch(`/cars/${car._id}`, {
-                method: 'DELETE',
-                headers: {
-                    Authorization: localStorage.getItem('jwt')
-                }
-            })
-            carNode.parentNode.remove()
-            alert('Eliminado con exito')
-        }
-    })
-}
-
-const addFormListener = () => {
-    const carForm = document.getElementById('car-form')
-    carForm.onsubmit = async (e) => {
+const authListener = action => () => {
+    const form = document.getElementById(`${action}-form`)
+    form.onsubmit = async (e) => {
         e.preventDefault()
-        const formData = new FormData(carForm)
+        const formData = new FormData(form)
         const data = Object.fromEntries(formData.entries())
-        await fetch('/cars', {
+
+        const response = await fetch(`/${action}`, {
             method: 'POST',
             body: JSON.stringify(data),
             headers: {
-                'content-type':'application/json',
-                Authorization: localStorage.getItem('jwt'),
+                'Content-type': 'application/json',
             }
         })
-        carForm.reset()
-        getCars()
+        const responseData = await response.text()
+        if(response.status >= 300) {
+            const errorNode = document.getElementById('error')
+            errorNode.innerHTML = responseData
+        } else {
+            localStorage.setItem('jwt', `Bearer ${responseData}`)
+            console.log('Se ha iniciado sesion con exito!')
+            const template = () => {
+                const welcome = `
+                <h1>Bienvenido</h1>
+            `
+            const body = document.getElementsByTagName('body')[0]
+            body.innerHTML = welcome
+            } 
+            carsPage()
+            template()
+        }
     }
 }
+const addLoginListener = authListener('login')
+const addRegisterListener = authListener('register')
+
+// const getCars = async () => {
+//     const response = await fetch('/cars', {
+//         headers: {
+//             Authorization: localStorage.getItem('jwt'),
+//         }
+//     })
+//     console.log(response)
+//     const cars = await response.json()
+//     console.log(cars)
+//     const template = car => `
+//         <li class="list-group-item">
+//             ${car.brand} ${car.model} <button data-id="${car._id}" type="button" class="btn btn-primary">Eliminar</button>
+//         </li>
+//     `
+//     const carList = document.getElementById('car-list')
+//     carList.innerHTML = cars.map(car => template(car)).join('')
+//     cars.forEach(car => {
+//         const carNode = document.querySelector(`[data-id="${car._id}"]`)
+//         carNode.onclick = async e => {
+//             await fetch(`/cars/${car._id}`, {
+//                 method: 'DELETE',
+//                 headers: {
+//                     Authorization: localStorage.getItem('jwt')
+//                 }
+//             })
+//             carNode.parentNode.remove()
+//             alert('Eliminado con exito')
+//         }
+//     })
+// }
+
+// const addFormListener = () => {
+//     const carForm = document.getElementById('car-form')
+//     carForm.onsubmit = async (e) => {
+//         e.preventDefault()
+//         const formData = new FormData(carForm)
+//         const data = Object.fromEntries(formData.entries())
+//         await fetch('/cars', {
+//             method: 'POST',
+//             body: JSON.stringify(data),
+//             headers: {
+//                 'content-type':'application/json',
+//                 Authorization: localStorage.getItem('jwt'),
+//             }
+//         })
+//         carForm.reset()
+//         getCars()
+//     }
+// }
 
 const checkLogin = () => {
     localStorage.getItem('jwt')
 }
 const carsPage = () => {
     loadInitialTemplate()
-    addFormListener()
-    getCars()
+    // addFormListener()
+    // getCars()
 }
 
 const loadReisterTemplate = () => {
@@ -162,33 +199,6 @@ const goToRegisterListener = () => {
         registerPage()
     }
 }
-
-const authListener = action => () => {
-    const form = document.getElementById(`${action}-form`)
-    form.onsubmit = async (e) => {
-        e.preventDefault()
-        const formData = new FormData(form)
-        const data = Object.fromEntries(formData.entries())
-
-        const response = await fetch(`/${action}`, {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: {
-                'Content-type': 'application/json',
-            }
-        })
-        const responseData = await response.text()
-        if(response.status >= 300) {
-            const errorNode = document.getElementById('error')
-            errorNode.innerHTML = responseData
-        } else {
-            localStorage.setItem('jwt', `Bearer ${responseData}`)
-            carsPage()
-        }
-    }
-}
-const addLoginListener = authListener('login')
-const addRegisterListener = authListener('register')
 
 window.onload = () => {
     const isLogedIn = checkLogin()

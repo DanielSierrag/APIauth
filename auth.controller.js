@@ -10,11 +10,8 @@ const signToken = _id => jwt.sign({ _id }, process.env.SECRET)
 
 const findAndAssignUser = async (req, res, next) => {
     try {
-        if(!req.user || !req.user._id){
-            return res.status(401).send('No se puede procesar la solicitud')
-        }
-        const user = await User.findById(req.user._id)
-        // const user = console.log(User.find())
+        const { body } = req
+        const user = await User.findById(body.user._id)
         if(!user) {
             return res.status(401).end()
         }
