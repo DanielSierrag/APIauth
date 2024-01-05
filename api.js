@@ -6,7 +6,7 @@ const app = express()
 const port = 3000
 
 app.use(express.json())
-mongoose.connect('mongodb+srv://daniel:1234@apiauth.ry4zqen.mongodb.net/?retryWrites=true&w=majority')
+mongoose.connect('mongodb+srv://daniel:1234@cluster0.kbbltdb.mongodb.net/carApp?retryWrites=true&w=majority')
 
 // app.get('/cars', isAuthenticated, car.list)
 // app.post('/cars', isAuthenticated, car.create)
